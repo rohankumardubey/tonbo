@@ -310,8 +310,10 @@ pub fn tonbo_record(_args: TokenStream, input: TokenStream) -> TokenStream {
                             builder_push_some_fields.push(quote! {
                                 self.#field_name.append_value(row.#field_name.unwrap());
                             });
-                            builder_push_none_fields.push(quote! {
-                                self.#field_name.append_value(Default::default());
+                            builder_push_none_fields.push(if is_string {
+                                quote!(self.#field_name.append_value("");)
+                            } else {
+                                quote!(self.#field_name.append_value(Default::default());)
                             });
                             decode_method_fields.push(quote! {
                                 let #field_name = Option::<#field_ty>::decode(reader).await.map_err(|err| ::tonbo::record::RecordDecodeError::Decode {
@@ -614,6 +616,7 @@ pub fn tonbo_record(_args: TokenStream, input: TokenStream) -> TokenStream {
             }
         }
     };
+    println!("{}", gen);
     // std::fs::write("../test.rs", gen.to_string()).unwrap();
 
     gen.into()

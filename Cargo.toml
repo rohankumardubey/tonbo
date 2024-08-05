@@ -7,6 +7,7 @@ resolver = "2"
 version = "0.0.0"
 
 [features]
+datafusion = ["dep:datafusion", "dep:async-trait"]
 tokio = ["dep:tokio"]
 
 [[example]]
@@ -14,12 +15,18 @@ name = "declare"
 path = "examples/declare.rs"
 required-features = ["tokio"]
 
+[[example]]
+name = "sql"
+path = "examples/sql.rs"
+required-features = ["datafusion", "tokio"]
+
 [dependencies]
 arrow = "52"
 async-lock = "3"
 async-stream = "0.3"
 crc32fast = "1"
 crossbeam-skiplist = "0.1"
+datafusion = { version = "40", optional = true }
 flume = { version = "0.11", features = ["async"] }
 futures-core = "0.3"
 futures-io = "0.3"
@@ -35,6 +42,7 @@ tokio-util = { version = "0.7", features = ["compat"] }
 tonbo_marco = { path = "src/tonbo_marco" }
 tracing = "0.1"
 ulid = "1"
+async-trait = { version = "0.1", optional = true }
 
 
 [dev-dependencies]
