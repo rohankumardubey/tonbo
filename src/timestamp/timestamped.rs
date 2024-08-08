@@ -6,7 +6,7 @@ use std::{
     mem::{size_of, transmute},
 };
 
-use futures_io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite};
 
 use crate::{
     serdes::{Decode, Encode},
