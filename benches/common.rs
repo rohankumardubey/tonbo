@@ -7,6 +7,7 @@ use std::{
 };
 
 use async_stream::stream;
+use fusio_dispatch::FsOptions;
 use futures_core::Stream;
 use futures_util::StreamExt;
 use parquet::data_type::AsBytes;
@@ -182,6 +183,84 @@ pub trait BenchReader {
         &'a self,
         range: (Bound<&'a ItemKey>, Bound<&'a ItemKey>),
     ) -> impl Stream<Item = ProjectionResult> + 'a;
+}
+
+pub struct TonboS3BenchDataBase {
+    db: tonbo::DB<Customer, TokioExecutor>,
+}
+
+impl TonboS3BenchDataBase {
+    #[allow(dead_code)]
+    pub fn new(db: tonbo::DB<Customer, TokioExecutor>) -> Self {
+        TonboS3BenchDataBase { db }
+    }
+}
+
+impl BenchDatabase for TonboS3BenchDataBase {
+    type W<'db>
+    = TonboBenchWriteTransaction<'db>
+    where
+        Self: 'db;
+    type R<'db>
+    = TonboBenchReadTransaction<'db>
+    where
+        Self: 'db;
+
+    fn db_type_name() -> &'static str {
+        "tonbo on s3"
+    }
+
+    async fn write_transaction(&self) -> Self::W<'_> {
+        TonboBenchWriteTransaction {
+            txn: self.db.transaction().await,
+        }
+    }
+
+    async fn read_transaction(&self) -> Self::R<'_> {
+        TonboBenchReadTransaction {
+            txn: self.db.transaction().await,
+        }
+    }
+
+    async fn build(path: impl AsRef<Path>) -> Self {
+        create_dir_all(path.as_ref()).await.unwrap();
+
+        let path = fusio::path::Path::from_filesystem_path(path.as_ref()).unwrap();
+        let option = DbOption::from(path.clone())
+            .level_path(
+                0,
+                fusio::path::Path::from_filesystem_path("/home/kkould/tonbo/l0").unwrap(),
+                FsOptions::Local,
+            )
+            .unwrap()
+            .level_path(
+                1,
+                fusio::path::Path::from_filesystem_path("/home/kkould/tonbo/l1").unwrap(),
+                FsOptions::Local,
+            )
+            .unwrap()
+            .level_path(
+                2,
+                fusio::path::Path::from_filesystem_path("/home/kkould/tonbo/l2").unwrap(),
+                FsOptions::Local,
+            )
+            .unwrap()
+            .level_path(
+                3,
+                fusio::path::Path::from_filesystem_path("/home/kkould/tonbo/l3").unwrap(),
+                FsOptions::Local,
+            )
+            .unwrap()
+            .level_path(
+                4,
+                fusio::path::Path::from_filesystem_path("/home/kkould/tonbo/l4").unwrap(),
+                FsOptions::Local,
+            )
+            .unwrap()
+            .disable_wal();
+
+        TonboS3BenchDataBase::new(tonbo::DB::new(option, TokioExecutor::new()).await.unwrap())
+    }
 }
 
 pub struct TonboBenchDataBase {
